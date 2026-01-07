@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, UsePipes
 import { TimeEntry } from './time-entry.schema';
 import { CalculatedTimeEntry } from './time-entry.entity';
 import { CreateTimeEntryDTO } from './time-entry.dto';
-import { TimeEntryDataSource } from './time-entry.ds.service';
+import { TimeEntryDataSource } from './datasource/time-entry.ds';
 
 const hourlyRate = 60;
 
@@ -27,7 +27,7 @@ export class TimeEntryController {
   async detail(@Param('id') id: string) {
     const record: TimeEntry | null = await this.dataSource.get(id);
     if (!record) {
-      throw new HttpException('Not fount', HttpStatus.NOT_FOUND);
+      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
     const duration = (record.end.getTime() - record.start.getTime()) / (1000 * 60 * 60);
     return {

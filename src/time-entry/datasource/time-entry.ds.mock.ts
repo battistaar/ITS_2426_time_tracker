@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { TimeEntry } from './time-entry.schema';
-import { CreateTimeEntryDTO } from './time-entry.dto';
+import { TimeEntry } from '../time-entry.schema';
+import { CreateTimeEntryDTO } from '../time-entry.dto';
 import { Types } from 'mongoose';
+import { TimeEntryDataSource } from './time-entry.ds';
 
 @Injectable()
-export class TimeEntryMockDataSource {
+export class TimeEntryMockDataSource extends TimeEntryDataSource {
   protected data: TimeEntry[] = [];
 
   constructor(data?: TimeEntry[]) {
+    super();
     if (data) {
       this.setRecords(data);
     }
