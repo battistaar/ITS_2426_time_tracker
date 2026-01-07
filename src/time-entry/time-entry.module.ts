@@ -6,6 +6,8 @@ import { TimeEntryDataSource } from './datasource/time-entry.ds';
 import { TimeEntryMongoDataSource } from './datasource/time-entry.ds.mongo';
 import { DurationService } from './duration/duration.service';
 import { ExactDurationService } from './duration/exact-duration.service';
+import { AmountService } from './amount/amount.service';
+import { FixedAmountService } from './amount/fixed-amount.service';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: TimeEntry.name, schema: TimeEntrySchema }])], //
@@ -18,6 +20,10 @@ import { ExactDurationService } from './duration/exact-duration.service';
     {
       provide: DurationService,
       useClass: ExactDurationService
+    },
+    {
+      provide: AmountService,
+      useClass: FixedAmountService
     }
   ],
 })

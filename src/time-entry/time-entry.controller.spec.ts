@@ -6,11 +6,14 @@ import { Types } from 'mongoose';
 import { TimeEntry } from "./time-entry.schema";
 import { ExactDurationService } from "./duration/exact-duration.service";
 import { DurationService } from "./duration/duration.service";
+import { AmountService } from "./amount/amount.service";
+import { FixedAmountService } from "./amount/fixed-amount.service";
 
 describe('TimeEntryController', () => {
   let controller: TimeEntryController;
   let dataSource: TimeEntryMockDataSource;
   let durationSrv: DurationService;
+  let amountSrv: AmountService;
 
   beforeEach(async () => {
     dataSource = new TimeEntryMockDataSource();
@@ -24,12 +27,17 @@ describe('TimeEntryController', () => {
         {
           provide: DurationService,
           useClass: ExactDurationService
+        },
+        {
+          provide: AmountService,
+          useClass: FixedAmountService
         }
       ]
     }).compile();
 
     controller = app.get<TimeEntryController>(TimeEntryController);
     durationSrv = app.get<DurationService>(DurationService);
+    amountSrv = app.get<AmountService>(AmountService);
   })
 
   describe('list', () => {
@@ -81,12 +89,15 @@ describe('TimeEntryController', () => {
       ];
       dataSource.setRecords(records);
       const durationSpy = jest.spyOn(durationSrv, 'getDuration');
+      const amountSpy = jest.spyOn(amountSrv, 'calcAmount');
 
       const result = await controller.list();
       expect(durationSpy).toHaveBeenCalledTimes(3);
       for (let i = 0; i < records.length; i++) {
         expect(durationSpy).toHaveBeenNthCalledWith(i + 1, records[i].start, records[i].end);
       }
+
+      expect(amountSpy).toHaveBeenCalledTimes(2);
 
       expect(result[0].amount).toBeGreaterThan(0);
       expect(result[1].amount).toBe(0);
