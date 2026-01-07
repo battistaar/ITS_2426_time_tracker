@@ -1,5 +1,5 @@
-import { Type } from "class-transformer";
-import { IsBoolean, IsDate, IsString } from "class-validator";
+import { Type } from 'class-transformer';
+import { IsBoolean, IsDate, IsString } from 'class-validator';
 
 export class CreateTimeEntryDTO {
   @IsString()
@@ -11,7 +11,7 @@ export class CreateTimeEntryDTO {
 
   @IsDate()
   @Type(() => Date)
-  end: Date; 
+  end: Date;
 
   @IsBoolean()
   billable: boolean;

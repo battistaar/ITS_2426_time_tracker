@@ -5,6 +5,8 @@ export type TimeEntryDocument = HydratedDocument<TimeEntry>;
 
 @Schema()
 export class TimeEntry {
+  id: string;
+
   @Prop()
   description: string;
 
