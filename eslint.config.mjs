@@ -26,9 +26,12 @@ export default tseslint.config(
   },
   {
     rules: {
+      '@stylistic/max-len': ['error', { code: 200 }],
+      '@stylistic/arrow-parens': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      "@typescript-eslint/require-await": "off",
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
