@@ -4,10 +4,13 @@ import { TimeEntryMockDataSource } from "./datasource/time-entry.ds.mock";
 import { TimeEntryDataSource } from "./datasource/time-entry.ds";
 import { Types } from 'mongoose';
 import { TimeEntry } from "./time-entry.schema";
+import { ExactDurationService } from "./duration/exact-duration.service";
+import { DurationService } from "./duration/duration.service";
 
 describe('TimeEntryController', () => {
   let controller: TimeEntryController;
   let dataSource: TimeEntryMockDataSource;
+  let durationSrv: DurationService;
 
   beforeEach(async () => {
     dataSource = new TimeEntryMockDataSource();
@@ -17,11 +20,16 @@ describe('TimeEntryController', () => {
         {
           provide: TimeEntryDataSource,
           useValue: dataSource
+        },
+        {
+          provide: DurationService,
+          useClass: ExactDurationService
         }
       ]
     }).compile();
 
     controller = app.get<TimeEntryController>(TimeEntryController);
+    durationSrv = app.get<DurationService>(DurationService);
   })
 
   describe('list', () => {
@@ -72,8 +80,14 @@ describe('TimeEntryController', () => {
         }
       ];
       dataSource.setRecords(records);
+      const durationSpy = jest.spyOn(durationSrv, 'getDuration');
 
-      const result = await controller.list()
+      const result = await controller.list();
+      expect(durationSpy).toHaveBeenCalledTimes(3);
+      for (let i = 0; i < records.length; i++) {
+        expect(durationSpy).toHaveBeenNthCalledWith(i + 1, records[i].start, records[i].end);
+      }
+
       expect(result[0].amount).toBeGreaterThan(0);
       expect(result[1].amount).toBe(0);
       expect(result[2].amount).toBeGreaterThan(0);
@@ -101,11 +115,12 @@ describe('TimeEntryController', () => {
         }
       ];
       dataSource.setRecords(records);
+      const durationSpy = jest.spyOn(durationSrv, 'getDuration');
+      const result = await controller.detail(records[1].id);
+      expect(durationSpy).toHaveBeenCalledWith(records[1].start, records[1].end);
 
-      return controller.detail(records[1].id).then(result => {
-        expect(result.id).toBe(records[1].id);
-        expect(result.amount).toBeDefined();
-      })
+      expect(result.id).toBe(records[1].id);
+      expect(result.amount).toBeDefined();
     });
 
     it('should calculate billable amounts"', async () => {

@@ -3,19 +3,23 @@ import { TimeEntry } from './time-entry.schema';
 import { CalculatedTimeEntry } from './time-entry.entity';
 import { CreateTimeEntryDTO } from './time-entry.dto';
 import { TimeEntryDataSource } from './datasource/time-entry.ds';
+import { DurationService } from './duration/duration.service';
 
 const hourlyRate = 60;
 
 @Controller('time-entries')
 export class TimeEntryController {
-  constructor(protected readonly dataSource: TimeEntryDataSource) {}
+  constructor(
+    protected readonly dataSource: TimeEntryDataSource,
+    protected readonly durationSrv: DurationService
+  ) {}
 
   @Get()
   async list(): Promise<CalculatedTimeEntry[]> {
     const list: TimeEntry[] = await this.dataSource.list();
 
     return list.map((e) => {
-      const duration = (e.end.getTime() - e.start.getTime()) / (1000 * 60 * 60);
+      const duration = this.durationSrv.getDuration(e.start, e.end);
       return {
         ...e,
         amount: e.billable ? duration * hourlyRate : 0,
@@ -29,7 +33,9 @@ export class TimeEntryController {
     if (!record) {
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
-    const duration = (record.end.getTime() - record.start.getTime()) / (1000 * 60 * 60);
+
+    const duration = this.durationSrv.getDuration(record.start, record.end);
+
     return {
       ...record,
       amount: record.billable ? duration * hourlyRate : 0,
@@ -40,7 +46,7 @@ export class TimeEntryController {
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(@Body() createTimeEntryDTO: CreateTimeEntryDTO) {
     const record: TimeEntry = await this.dataSource.add(createTimeEntryDTO);
-    const duration = (record.end.getTime() - record.start.getTime()) / (1000 * 60 * 60);
+    const duration = this.durationSrv.getDuration(record.start, record.end);
     return {
       ...record,
       amount: record.billable ? duration * hourlyRate : 0,
