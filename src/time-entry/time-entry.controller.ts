@@ -3,40 +3,22 @@ import { TimeEntry } from './time-entry.schema';
 import { CalculatedTimeEntry } from './time-entry.entity';
 import { CreateTimeEntryDTO } from './time-entry.dto';
 import { TimeEntryDataSource } from './datasource/time-entry.ds';
-import { DurationService } from './duration/duration.service';
-import { AmountService } from './amount/amount.service';
-import { TimeEntryResultFn } from './result-factory/result-fn';
-import { ResultFnFactory } from './result-factory/result-fn-factory';
-import { DurationSettings } from './duration/duration-settings.entity';
-import { ExactDurationService } from './duration/exact-duration.service';
-import { RoundedDurationService } from './duration/rounded-duration.service';
-import { DurationSettingsDS } from './duration/datasource/duration-settings.ds';
-import { DurationStrategySelector } from './duration/duration-strategy-selector';
+import { ResultCalculator } from './result-calculator.service';
 
-const hourlyRate = 60;
+const FAKE_USER_ID = '1234';
 
 @Controller('time-entries')
 export class TimeEntryController {
   constructor(
     protected readonly dataSource: TimeEntryDataSource,
-    protected readonly amountSrv: AmountService,
-    protected readonly resultFnFactory: ResultFnFactory,
-    protected readonly durationSettingsDs: DurationSettingsDS,
-    protected readonly durationStrategySelector: DurationStrategySelector
+    protected resultCalculator: ResultCalculator
   ) {}
 
   @Get()
   async list(): Promise<CalculatedTimeEntry[]> {
     const list: TimeEntry[] = await this.dataSource.list();
 
-    const durationSettings: DurationSettings = await this.durationSettingsDs.getDurationSettings();
-
-    const durationSrv: DurationService =
-      this.durationStrategySelector.getStrategy(durationSettings.strategy);
-
-    const resultFn = this.resultFnFactory.getResultFactory(durationSrv, this.amountSrv);
-
-    return list.map((e) => resultFn(e));
+    return this.resultCalculator.calcResult(FAKE_USER_ID, list);
   }
 
   @Get(':id')
@@ -45,14 +27,8 @@ export class TimeEntryController {
     if (!record) {
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
-    const durationSettings: DurationSettings = await this.durationSettingsDs.getDurationSettings();
 
-    const durationSrv: DurationService =
-      this.durationStrategySelector.getStrategy(durationSettings.strategy);
-
-    const resultFn: TimeEntryResultFn = this.resultFnFactory.getResultFactory(durationSrv, this.amountSrv);
-
-    return resultFn(record);
+    return this.resultCalculator.calcResult(FAKE_USER_ID, record);
   }
 
   @Post()
@@ -60,14 +36,6 @@ export class TimeEntryController {
   async create(@Body() createTimeEntryDTO: CreateTimeEntryDTO) {
     const record: TimeEntry = await this.dataSource.add(createTimeEntryDTO);
 
-    const durationSettings: DurationSettings = await this.durationSettingsDs.getDurationSettings();
-
-    const durationSrv: DurationService =
-      this.durationStrategySelector.getStrategy(durationSettings.strategy);
-
-
-    const resultFn = this.resultFnFactory.getResultFactory(durationSrv, this.amountSrv);
-
-    return resultFn(record);
+    return this.resultCalculator.calcResult(FAKE_USER_ID, record);
   }
 }

@@ -14,6 +14,8 @@ import { DurationSettingsDS } from './duration/datasource/duration-settings.ds';
 import { DurationSettingsStaticDS } from './duration/datasource/duration-settings.static.ds';
 import { DurationStrategySelector } from './duration/duration-strategy-selector';
 import { RoundedDurationService } from './duration/rounded-duration.service';
+import { STATIC_HOURLY_RATE, STATIC_MIN_BILLABLE } from './amount/datasource/amount-settings.static.ds';
+import { ResultCalculator } from './result-calculator.service';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: TimeEntry.name, schema: TimeEntrySchema }])], //
@@ -48,7 +50,16 @@ import { RoundedDurationService } from './duration/rounded-duration.service';
         return srv;
       },
       inject: [ExactDurationService, RoundedDurationService]
-    }
+    },
+    {
+      provide: STATIC_HOURLY_RATE,
+      useValue: 50
+    },
+    {
+      provide: STATIC_MIN_BILLABLE,
+      useValue: 30
+    },
+    ResultCalculator
   ],
 })
 export class TimeEntryModule {}

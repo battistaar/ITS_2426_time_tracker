@@ -3,7 +3,7 @@ import { DurationSettingsDS } from "./duration-settings.ds";
 
 export class DurationSettingsStaticDS extends DurationSettingsDS {
 
-  async getDurationSettings(): Promise<DurationSettings> {
+  async getDurationSettings(userId: string): Promise<DurationSettings> {
     return {
       strategy: 'exact'
     };
