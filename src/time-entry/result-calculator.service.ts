@@ -1,3 +1,4 @@
+import { CutoffAmountService } from './amount/cutoff-amount.service';
 import { Injectable } from "@nestjs/common";
 import { AmountSettings } from "./amount/amount-settings.entity";
 import { AmountService } from "./amount/amount.service";
@@ -11,6 +12,7 @@ import { TimeEntryResultFn } from "./result-factory/result-fn";
 import { ResultFnFactory } from "./result-factory/result-fn-factory";
 import { CalculatedTimeEntry } from "./time-entry.entity";
 import { TimeEntry } from "./time-entry.schema";
+import { DiscountAmountService } from './amount/discount-amount.service';
 
 @Injectable()
 export class ResultCalculator {
@@ -30,11 +32,13 @@ export class ResultCalculator {
     return durationSrv;
   }
 
-  protected async getAmountSrv(amountSettings: AmountSettings, duration: number): Promise<AmountService> {
+  protected async getAmountSrv(amountSettings: AmountSettings): Promise<AmountService> {
     let amountSrv: AmountService = new FixedAmountService(amountSettings.hourlyRate);
-    if (duration < amountSettings.minBillableDuration) {
-      amountSrv = new FixedAmountService(0);
+    if (amountSettings.minBillableDuration) {
+      amountSrv = new CutoffAmountService(amountSrv, amountSettings.minBillableDuration);
     }
+    amountSrv = new DiscountAmountService(amountSrv, amountSettings.discounts);
+
     return amountSrv;
   }
 
@@ -50,7 +54,7 @@ export class ResultCalculator {
     let results: CalculatedTimeEntry[] = [];
     for (const element of items) {
       const duration = durationSrv.getDuration(element.start, element.end);
-      const amountSrv: AmountService = await this.getAmountSrv(amountSettings, duration);
+      const amountSrv: AmountService = await this.getAmountSrv(amountSettings);
 
       const resultFn: TimeEntryResultFn = this.resultFnFactory.getResultFactory(durationSrv, amountSrv);
       results.push(resultFn(element));
