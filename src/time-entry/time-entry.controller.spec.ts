@@ -8,6 +8,7 @@ import { ExactDurationService } from "./duration/exact-duration.service";
 import { DurationService } from "./duration/duration.service";
 import { AmountService } from "./amount/amount.service";
 import { FixedAmountService } from "./amount/fixed-amount.service";
+import { TimeEntryResultFactory } from "./result-factory/time-entry-result-factory";
 
 describe('TimeEntryController', () => {
   let controller: TimeEntryController;
@@ -31,7 +32,8 @@ describe('TimeEntryController', () => {
         {
           provide: AmountService,
           useClass: FixedAmountService
-        }
+        },
+        TimeEntryResultFactory
       ]
     }).compile();
 
