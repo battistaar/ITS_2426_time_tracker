@@ -18,8 +18,11 @@ import { MockCompanyDS } from './datasource/company.ds.mock';
 import { MockUserDS } from './datasource/user.ds.mock';
 import { TimeEntryDataSource } from './datasource/time-entry.ds';
 import { UserAmountSettingsDS } from './amount/datasource/amount-settings-user.ds';
-import { User } from './amount/datasource/entities';
+import { Project, User } from './amount/datasource/entities';
 import { TimeEntryAmountSettingsDS } from './amount/datasource/amount-settings-tentry.ds';
+import { ProjectAmountSettingsDS } from './amount/datasource/amount-settings-project.ds';
+import { MockProjectDS } from './datasource/project.ds.mock';
+import { ProjectAmountSettingsAdapter } from './amount/datasource/amount-settings-project.adapter';
 
 @Injectable()
 export class ResultCalculator {
@@ -29,6 +32,7 @@ export class ResultCalculator {
     protected readonly durationStrategySelector: DurationStrategySelector,
     protected readonly companyDs: MockCompanyDS,
     protected readonly userds: MockUserDS,
+    protected readonly projectDs: MockProjectDS,
     protected readonly timeEntryDs: TimeEntryDataSource
   ) {}
 
@@ -51,10 +55,14 @@ export class ResultCalculator {
     return amountSrv;
   }
 
-  protected getAmountSettingsDs(): AmountSettingsDS {
+  protected getAmountSettingsDs(userId: string): AmountSettingsDS {
     let base: AmountSettingsDS = new CompanyAmountSettingsDS(this.companyDs);
     base = new UserAmountSettingsDS(this.userds, base, (entity: User) => entity.company);
-    base = new TimeEntryAmountSettingsDS(this.timeEntryDs, base, (entity: TimeEntry) => entity.user);
+
+    const pDs = new ProjectAmountSettingsDS(this.projectDs, base, (entity: Project) => userId);
+
+    base = new ProjectAmountSettingsAdapter(pDs, userId);
+    base = new TimeEntryAmountSettingsDS(this.timeEntryDs, base, (entity: TimeEntry) => entity.project);
     return base;
   }
 
@@ -66,13 +74,12 @@ export class ResultCalculator {
 
     const durationSrv: DurationService = await this.getDurationSrv(userId);
 
-    const amountSettingsDs = this.getAmountSettingsDs();
+    const amountSettingsDs = this.getAmountSettingsDs(userId);
 
     let results: CalculatedTimeEntry[] = [];
     for (const element of items) {
       const amountSettings: AmountSettings = await amountSettingsDs.getAmountSettings(element.id);
 
-      const duration = durationSrv.getDuration(element.start, element.end);
       const amountSrv: AmountService = await this.getAmountSrv(amountSettings);
 
       const resultFn: TimeEntryResultFn = this.resultFnFactory.getResultFactory(durationSrv, amountSrv);

@@ -1,16 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { DataSource } from "./generic.ds";
-import { Company } from "../amount/datasource/entities";
+import { Company, Project } from "../amount/datasource/entities";
 
 @Injectable()
-export class MockCompanyDS extends DataSource<Company> {
-  list(): Promise<Company[]> {
+export class MockProjectDS extends DataSource<Project> {
+  list(): Promise<Project[]> {
     throw new Error("Method not implemented.");
   }
-  get(id: string): Promise<Company> {
+  get(id: string): Promise<Project> {
     throw new Error("Method not implemented.");
   }
-  add(data: Company): Promise<Company> {
+  add(data: Project): Promise<Project> {
     throw new Error("Method not implemented.");
   }
 

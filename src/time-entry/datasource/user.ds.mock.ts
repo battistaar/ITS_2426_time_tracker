@@ -7,7 +7,7 @@ export class MockUserDS extends DataSource<User> {
   list(): Promise<User[]> {
     throw new Error("Method not implemented.");
   }
-  get(id: string): Promise<any> {
+  get(id: string): Promise<User> {
     throw new Error("Method not implemented.");
   }
   add(data: User): Promise<User> {
