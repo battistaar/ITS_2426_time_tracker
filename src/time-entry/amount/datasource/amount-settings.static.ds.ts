@@ -12,7 +12,7 @@ export class AmountSettingsStaticDS extends AmountSettingsDS {
     super();
   }
 
-  async getAmountSettings(userId: string): Promise<AmountSettings> {
+  async getAmountSettings(entityId: string): Promise<AmountSettings> {
     return {
       hourlyRate: this.defaultHourlyRate,
       minBillableDuration: this.defaultMinBillable,

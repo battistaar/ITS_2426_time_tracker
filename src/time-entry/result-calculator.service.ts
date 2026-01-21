@@ -13,14 +13,23 @@ import { ResultFnFactory } from "./result-factory/result-fn-factory";
 import { CalculatedTimeEntry } from "./time-entry.entity";
 import { TimeEntry } from "./time-entry.schema";
 import { DiscountAmountService } from './amount/discount-amount.service';
+import { CompanyAmountSettingsDS } from './amount/datasource/amount-settings-company.ds';
+import { MockCompanyDS } from './datasource/company.ds.mock';
+import { MockUserDS } from './datasource/user.ds.mock';
+import { TimeEntryDataSource } from './datasource/time-entry.ds';
+import { UserAmountSettingsDS } from './amount/datasource/amount-settings-user.ds';
+import { User } from './amount/datasource/entities';
+import { TimeEntryAmountSettingsDS } from './amount/datasource/amount-settings-tentry.ds';
 
 @Injectable()
 export class ResultCalculator {
   constructor(
     protected readonly resultFnFactory: ResultFnFactory,
     protected readonly durationSettingsDs: DurationSettingsDS,
-    protected readonly amountSettingsDs: AmountSettingsDS,
-    protected readonly durationStrategySelector: DurationStrategySelector
+    protected readonly durationStrategySelector: DurationStrategySelector,
+    protected readonly companyDs: MockCompanyDS,
+    protected readonly userds: MockUserDS,
+    protected readonly timeEntryDs: TimeEntryDataSource
   ) {}
 
   protected async getDurationSrv(userId: string): Promise<DurationService> {
@@ -42,6 +51,13 @@ export class ResultCalculator {
     return amountSrv;
   }
 
+  protected getAmountSettingsDs(): AmountSettingsDS {
+    let base: AmountSettingsDS = new CompanyAmountSettingsDS(this.companyDs);
+    base = new UserAmountSettingsDS(this.userds, base, (entity: User) => entity.company);
+    base = new TimeEntryAmountSettingsDS(this.timeEntryDs, base, (entity: TimeEntry) => entity.user);
+    return base;
+  }
+
   async calcResult(userId: string, item: TimeEntry[]): Promise<CalculatedTimeEntry[]>;
   async calcResult(userId: string, item: TimeEntry): Promise<CalculatedTimeEntry>;
   async calcResult(userId: string, item: TimeEntry | TimeEntry[]) {
@@ -49,10 +65,13 @@ export class ResultCalculator {
     const items: TimeEntry[] = Array.isArray(item) ? item : [item];
 
     const durationSrv: DurationService = await this.getDurationSrv(userId);
-    const amountSettings: AmountSettings = await this.amountSettingsDs.getAmountSettings(userId);
+
+    const amountSettingsDs = this.getAmountSettingsDs();
 
     let results: CalculatedTimeEntry[] = [];
     for (const element of items) {
+      const amountSettings: AmountSettings = await amountSettingsDs.getAmountSettings(element.id);
+
       const duration = durationSrv.getDuration(element.start, element.end);
       const amountSrv: AmountService = await this.getAmountSrv(amountSettings);
 

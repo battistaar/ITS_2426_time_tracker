@@ -32,7 +32,7 @@ export class TimeEntryMockDataSource extends TimeEntryDataSource {
     const record = {
       ...data,
       id,
-    };
+    } as TimeEntry;
     this.data.push(record);
 
     return record;
